@@ -6,19 +6,52 @@ import { StyleSheet, Text, View, Platform } from 'react-native';
 export default class App extends React.Component {
   state = {
     value: "",
-    items: []
+    items: [],
+    allComplete: false
   }
 
   handleAddItem = () => {
+    if(!this.state.value) return;
+    const newItems = [
+      ... this.state.items,
+      {
+        key: Date.now(),
+        text: this.state.value,
+        complete: false
+      }
+    ]
 
+    this.setState({
+      items: newItems,
+      value: ""
+    })
+  }
+
+  HandleToggleAllComplete() {
+    const complete = !this.state.allComplete
+    const newItems = this.state.items.map((item) => ({
+      ... item,
+      complete
+    }))
+
+    this.setState({
+      items: newItems,
+      allComplete: complete
+    })
+
+    console.table(this.state.items)
   }
 
   render() {
     return (
       <View style={styles.container}>
-        <Header value={this.state.value} onAddItem={this.handleAddItem}/>
+        <Header 
+          value={this.state.value} 
+          onAddItem={this.handleAddItem} 
+          onChange={(value)=>this.setState({ value })}
+          onToggleAllComplete={this.HandleToggleAllComplete}/>
         <View>
-          <Text style={styles.content}>content.</Text>
+          <Text style={styles.content}>content</Text>
         </View>
         <Footer/>
       </View>
