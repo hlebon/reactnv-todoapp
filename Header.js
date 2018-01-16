@@ -5,7 +5,7 @@ export default class Header extends Component {
     render() { 
         return ( 
         <View style={styles.header}>
-            <TouchableOpacity onPress={this.props.onToggleAllComplete}>
+            <TouchableOpacity onPress={() => this.props.onToggleAllComplete}>
                 <Text style={styles.toogleIcon}>{String.fromCharCode(10003)}</Text>
             </TouchableOpacity>
             <TextInput 
