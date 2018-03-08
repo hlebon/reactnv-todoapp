@@ -6,8 +6,17 @@ import Row from './Row'
 
 const ds = new ListView.DataSource({ rowHasChanged: (r1, r2) => r1 !== r2 });
 
+const filterItems = (filter, items) => {
+  return items.filter( item => {
+    if(filter === "ALL") return true;
+    if(filter === "COMPLETED") return item.complete;
+    if(filter === "ACTIVE") return !item.complete;
+  })
+}
+
 export default class App extends React.Component {
   state = {
+    filter: "ALL",
     value: "",
     items: [],
     allComplete: false,
@@ -20,6 +29,22 @@ export default class App extends React.Component {
       dataSource: this.state.dataSource.cloneWithRows(itemsDataSource),
       ... otherState
     })
+  }
+
+  handleToogleComplete = (key, complete) => {
+    console.log(key, complete)
+    const newItems = this.state.items.map( item => {
+      if(item.key !== key) return item;
+      return {
+        ... item,
+        complete
+      }
+    })
+    this.setSource(newItems, filterItems(this.state.filter, newItems))
+  }
+
+  handleFilter = (filter) => {
+    this.setSource(this.state.items, filterItems(filter, this.state.items), {filter})
   }
 
   handleAddItem = () => {
@@ -35,7 +60,14 @@ export default class App extends React.Component {
     this.setSource(newItems,newItems, { value : "" } )
   }
 
-  HandleToggleAllComplete() {
+  handleRemoveItem = (key) => {
+    const newItems = this.state.items.filter( item => {
+      return item.key !== key
+    })
+    this.setSource(newItems, filterItems(this.state.filter, newItems))
+  }
+
+  HandleToggleAllComplete = () => {
     console.log(this.state.allComplete);
 
     const complete = !this.state.allComplete;
@@ -44,9 +76,7 @@ export default class App extends React.Component {
       complete
     }))
 
-    this.setSource(newItems, newItems, { allComplete: complete })
-
-    console.table(this.state.items)
+    this.setSource(newItems, filterItems(this.state.filter, newItems), { allComplete: complete })
   }
 
   render() {
@@ -67,6 +97,8 @@ export default class App extends React.Component {
               return (
                 <Row 
                   key={key}
+                  onRemove={() => this.handleRemoveItem(key)}
+                  onComplete={(complete) => this.handleToogleComplete(key, complete)}
                   {... value}
                 />
               )
@@ -78,7 +110,7 @@ export default class App extends React.Component {
             }}
           />
         </View>
-        <Footer/>
+        <Footer filter={this.state.filter} onFilter={this.handleFilter}/>
       </View>
     );
   }
