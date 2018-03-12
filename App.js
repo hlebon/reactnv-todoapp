@@ -1,7 +1,7 @@
 import React from 'react';
 import Header from './Header'
 import Footer from './Footer'
-import { StyleSheet, Text, View, Platform, ListView, Keyboard } from 'react-native'
+import { StyleSheet, Text, View, Platform, ListView, Keyboard, AsyncStorage, ActivityIndicator } from 'react-native'
 import Row from './Row'
 
 const ds = new ListView.DataSource({ rowHasChanged: (r1, r2) => r1 !== r2 });
@@ -16,11 +16,25 @@ const filterItems = (filter, items) => {
 
 export default class App extends React.Component {
   state = {
+    loading: true,
     filter: "ALL",
     value: "",
     items: [],
     allComplete: false,
     dataSource: ds.cloneWithRows([])
+  }
+
+  componentDidMount(){
+    AsyncStorage.getItem("items").then((json) => {
+      try {
+        const items = JSON.parse(json)
+        this.setSource(items, items, { loading: false })
+      } catch (error) {
+        this.setState({
+          loading: false
+        })
+      }
+    })
   }
 
   setSource(items, itemsDataSource, otherState = {}){
@@ -29,6 +43,7 @@ export default class App extends React.Component {
       dataSource: this.state.dataSource.cloneWithRows(itemsDataSource),
       ... otherState
     })
+    AsyncStorage.setItem("items", JSON.stringify(items))
   }
 
   handleToogleComplete = (key, complete) => {
@@ -79,6 +94,11 @@ export default class App extends React.Component {
     this.setSource(newItems, filterItems(this.state.filter, newItems), { allComplete: complete })
   }
 
+  handleClearComplete = () => {
+    const newItems = filterItems("ACTIVE", this.state.items);
+    this.setSource(newItems, filterItems(this.state.filter, newItems))
+  }
+
   render() {
     return (
       <View style={styles.container}>
@@ -110,13 +130,31 @@ export default class App extends React.Component {
             }}
           />
         </View>
-        <Footer filter={this.state.filter} onFilter={this.handleFilter}/>
+        <Footer count={filterItems("ACTIVE", this.state.items).length} filter={this.state.filter} onFilter={this.handleFilter}
+          onClearComplete={this.handleClearComplete}/>
+        {this.state.loading && <View style={styles.loading}>
+            <ActivityIndicator
+              animating
+              size="large"
+            />
+        </View>
+        }
       </View>
     );
   }
 }
 
 const styles = StyleSheet.create({
+  loading: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,.2)"
+  },
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
